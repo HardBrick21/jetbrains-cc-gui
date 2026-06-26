@@ -336,6 +336,15 @@ public class CodexSDKBridge extends BaseSDKBridge {
     // ============================================================================
 
     /**
+     * Dispose the runtime for a given channel/session.
+     * For Codex, this interrupts the channel to force a new process on next send.
+     */
+    public void disposeRuntime(String channelId) {
+        LOG.info("[CodexSDKBridge] Disposing runtime for channel: " + channelId);
+        interruptChannel(channelId);
+    }
+
+    /**
      * Send message to Codex (streaming response).
      *
      * Note: Codex uses threadId instead of sessionId

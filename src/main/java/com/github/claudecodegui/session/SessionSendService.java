@@ -90,6 +90,13 @@ public class SessionSendService {
             String requestedReasoningEffort,
             String requestedCodexFastMode
     ) {
+        // Check if context is dirty and rebuild runtime if needed
+        if (state.isContextDirty()) {
+            LOG.info("[Rebuild] Context is dirty, disposing runtime for channel " + channelId);
+            disposeRuntimeForProvider(channelId);
+            state.clearContextDirty();
+        }
+
         String agentPrompt = externalAgentPrompt;
         if (agentPrompt == null) {
             agentPrompt = getAgentPrompt();
@@ -136,6 +143,23 @@ public class SessionSendService {
 
         return sendToClaude(channelId, input, attachments, openedFilesJson, agentPrompt,
                 effectivePermissionMode, normalizedRequestedEffort);
+    }
+
+    /**
+     * Dispose the current runtime for the provider to force rebuild on next send.
+     */
+    private void disposeRuntimeForProvider(String channelId) {
+        try {
+            String currentProvider = state.getProvider();
+            if ("codex".equals(currentProvider)) {
+                codexSDKBridge.disposeRuntime(channelId);
+            } else {
+                claudeSDKBridge.disposeRuntime(channelId);
+            }
+            LOG.info("[Rebuild] Runtime disposed for provider: " + currentProvider);
+        } catch (Exception e) {
+            LOG.warn("[Rebuild] Failed to dispose runtime: " + e.getMessage());
+        }
     }
 
     public static String normalizeRequestedReasoningEffort(String effort) {

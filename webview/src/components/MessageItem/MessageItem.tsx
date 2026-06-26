@@ -39,6 +39,8 @@ export interface MessageItemProps {
   toolResultSignature?: string;
   /** Current active provider id (e.g. 'claude', 'codex'); drives the streaming-connect label. */
   currentProvider?: string;
+  /** Callback when user requests to delete this message */
+  onDeleteMessage?: (messageIndex: number) => void;
 }
 
 /** Map provider id to a human-readable label used in UI text. */
@@ -335,9 +337,12 @@ export const MessageItem = memo(function MessageItem({
   onNavigateToDependencySettings,
   toolResultSignature: _toolResultSignature,
   currentProvider,
+  onDeleteMessage,
 }: MessageItemProps): React.ReactElement {
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(null);
   const [showStreamingConnectHint, setShowStreamingConnectHint] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Track timeout to properly cleanup on unmount
   const copyTimeoutRef = useRef<number | null>(null);
@@ -692,32 +697,69 @@ export const MessageItem = memo(function MessageItem({
       ref={anchorRefCallback}
       data-message-anchor-id={message.type === 'user' ? messageKey : undefined}
     >
-      {/* Timestamp and copy button for user messages */}
+      {/* Timestamp, copy button, and delete button for user messages */}
       {message.type === 'user' && message.timestamp && (
-        <div className="message-header-row">
+        <div className="message-header-row"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <div className="message-timestamp-header">
             {formatTime(message.timestamp)}
           </div>
-          {hasCopyableText && (
-            <CopyButton
-              className="message-copy-btn-inline"
-              isCopied={copiedMessageIndex === messageIndex}
-              onClick={handleCopyMessage}
-              copyLabel={t('markdown.copyMessage')}
-              copySuccessText={t('markdown.copySuccess')}
-            />
-          )}
+          <div className="message-actions">
+            {hasCopyableText && (
+              <CopyButton
+                className="message-copy-btn-inline"
+                isCopied={copiedMessageIndex === messageIndex}
+                onClick={handleCopyMessage}
+                copyLabel={t('markdown.copyMessage')}
+                copySuccessText={t('markdown.copySuccess')}
+              />
+            )}
+            {isHovered && onDeleteMessage && (
+              <button
+                type="button"
+                className="message-delete-btn"
+                onClick={() => setShowDeleteConfirm(true)}
+                title={t('chat.deleteMessage')}
+                aria-label={t('chat.deleteMessage')}
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5.5 2.5h5M3 4.5h10M4 4.5v9a1.5 1.5 0 0 0 1.5 1.5h5A1.5 1.5 0 0 0 12 13.5v-9M6.5 7v5M9.5 7v5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Copy button for assistant messages only */}
+      {/* Copy button and delete button for assistant messages */}
       {message.type === 'assistant' && !isMessageStreaming && hasCopyableText && (
-        <CopyButton
-          isCopied={copiedMessageIndex === messageIndex}
-          onClick={handleCopyMessage}
-          copyLabel={t('markdown.copyMessage')}
-          copySuccessText={t('markdown.copySuccess')}
-        />
+        <div
+          className="message-actions assistant-actions"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <CopyButton
+            isCopied={copiedMessageIndex === messageIndex}
+            onClick={handleCopyMessage}
+            copyLabel={t('markdown.copyMessage')}
+            copySuccessText={t('markdown.copySuccess')}
+          />
+          {isHovered && onDeleteMessage && (
+            <button
+              type="button"
+              className="message-delete-btn"
+              onClick={() => setShowDeleteConfirm(true)}
+              title={t('chat.deleteMessage')}
+              aria-label={t('chat.deleteMessage')}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5.5 2.5h5M3 4.5h10M4 4.5v9a1.5 1.5 0 0 0 1.5 1.5h5A1.5 1.5 0 0 0 12 13.5v-9M6.5 7v5M9.5 7v5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
       )}
 
       {/* Role label for non-user/assistant messages — hidden for notification types */}
@@ -763,6 +805,35 @@ export const MessageItem = memo(function MessageItem({
               );
             })()}
           </span>
+        </div>
+      )}
+
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && onDeleteMessage && (
+        <div className="delete-confirm-overlay">
+          <div className="delete-confirm-dialog">
+            <div className="delete-confirm-title">{t('chat.deleteConfirmTitle')}</div>
+            <div className="delete-confirm-text">{t('chat.deleteConfirmText')}</div>
+            <div className="delete-confirm-actions">
+              <button
+                type="button"
+                className="delete-confirm-cancel"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                {t('chat.deleteCancel')}
+              </button>
+              <button
+                type="button"
+                className="delete-confirm-delete"
+                onClick={() => {
+                  onDeleteMessage(messageIndex);
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                {t('chat.deleteConfirm')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
