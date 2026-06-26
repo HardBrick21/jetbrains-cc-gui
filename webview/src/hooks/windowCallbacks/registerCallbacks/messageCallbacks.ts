@@ -671,4 +671,18 @@ export function registerMessageCallbacks(
     });
   };
 
+  window.onMessageDeleted = (json: string) => {
+    if (window.__sessionTransitioning) return;
+    try {
+      const result = JSON.parse(json);
+      if (result.success) {
+        addToast('Message deleted', 'success');
+      } else {
+        addToast(result.error || 'Failed to delete message', 'error');
+      }
+    } catch (e) {
+      debugError('[onMessageDeleted] Failed to parse delete result:', e);
+    }
+  };
+
 }

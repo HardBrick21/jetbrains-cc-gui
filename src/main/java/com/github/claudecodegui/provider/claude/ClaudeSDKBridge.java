@@ -637,6 +637,45 @@ public class ClaudeSDKBridge extends BaseSDKBridge {
     }
 
     /**
+     * Dispose the runtime for a given channel/session.
+     * In daemon mode, sends a reset_runtime command. In per-process mode, interrupts the channel.
+     */
+    public void disposeRuntime(String channelId) {
+        LOG.info("[ClaudeSDKBridge] Disposing runtime for channel: " + channelId);
+
+        // Try daemon mode first
+        DaemonBridge db = daemonCoordinator.getCurrentDaemonBridge();
+        if (db != null && db.isAlive()) {
+            try {
+                JsonObject params = new JsonObject();
+                params.addProperty("channelId", channelId);
+                db.sendCommand("claude.resetRuntimePersistent", params, new DaemonBridge.DaemonOutputCallback() {
+                    @Override
+                    public void onLine(String line) {
+                        LOG.debug("[ClaudeSDKBridge] resetRuntime response: " + line);
+                    }
+                    @Override
+                    public void onStderr(String text) { }
+                    @Override
+                    public void onError(String error) {
+                        LOG.warn("[ClaudeSDKBridge] resetRuntime error: " + error);
+                    }
+                    @Override
+                    public void onComplete(boolean success) {
+                        LOG.info("[ClaudeSDKBridge] resetRuntime completed: " + success);
+                    }
+                });
+                return;
+            } catch (Exception e) {
+                LOG.warn("[ClaudeSDKBridge] Daemon resetRuntime failed, falling back to interrupt: " + e.getMessage());
+            }
+        }
+
+        // Fallback: interrupt the channel (per-process mode)
+        interruptChannel(channelId);
+    }
+
+    /**
      * Converts a Windows-style cwd to a WSL path when the active node executable is a WSL binary.
      * On non-WSL setups this is a no-op.
      */

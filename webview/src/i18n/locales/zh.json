@@ -93,6 +93,11 @@
     "totalDuration": "本次耗时",
     "tokenUsage": "输入 {{input}} / 输出 {{output}}",
     "tokenUsageDetail": "本轮合计 — 输入 {{input}} · 缓存写入 {{cacheWrite}} · 缓存读取 {{cacheRead}} · 输出 {{output}}",
+    "deleteMessage": "删除消息",
+    "deleteConfirmTitle": "删除消息",
+    "deleteConfirmText": "确定要删除这条消息吗？这将从 AI 的上下文中移除它。",
+    "deleteCancel": "取消",
+    "deleteConfirm": "删除",
     "search": {
       "ariaLabel": "在对话中搜索",
       "placeholder": "在对话中搜索…",

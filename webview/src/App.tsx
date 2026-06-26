@@ -515,6 +515,18 @@ const App = () => {
           onLongContextChange={handleLongContextChange}
           messageQueue={messageQueue}
           onRemoveFromQueue={dequeueMessage}
+          onDeleteMessage={(messageIndex) => {
+            sendBridgeEvent('delete_message', JSON.stringify({ messageIndex }));
+            // Optimistically remove from local state
+            setMessages((prev) => {
+              if (messageIndex < 0 || messageIndex >= prev.length) {
+                return prev;
+              }
+              const next = [...prev];
+              next.splice(messageIndex, 1);
+              return next;
+            });
+          }}
         />
       ) : (
         <HistoryView

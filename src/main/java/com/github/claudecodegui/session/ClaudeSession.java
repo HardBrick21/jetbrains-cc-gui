@@ -544,6 +544,37 @@ public class ClaudeSession {
     }
 
     /**
+     * Delete a message at the specified index from the session.
+     * Marks the context as dirty so the runtime will be rebuilt on next send.
+     *
+     * @param index the message index to delete
+     * @return true if deleted successfully, false if index invalid
+     */
+    public boolean deleteMessage(int index) {
+        boolean deleted = state.deleteMessage(index);
+        if (deleted) {
+            // Notify frontend of message list update
+            callbackFacade.notifyMessageUpdate(state.getMessages());
+            LOG.info("Deleted message at index " + index + ", context marked dirty");
+        }
+        return deleted;
+    }
+
+    /**
+     * Check if the session context is dirty (needs runtime rebuild).
+     */
+    public boolean isContextDirty() {
+        return state.isContextDirty();
+    }
+
+    /**
+     * Clear the dirty flag after runtime rebuild.
+     */
+    public void clearContextDirty() {
+        state.clearContextDirty();
+    }
+
+    /**
      * Represents a file attachment (e.g., image).
      */
     public static class Attachment {

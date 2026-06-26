@@ -99,6 +99,13 @@ async function createRuntime(requestContext, callbacks) {
     titleGenerationAttempted: false
   };
 
+  // If retained messages provided, inject them into the initial prompt
+  if (requestContext.retainedMessages && requestContext.retainedMessages.length > 0) {
+    for (const msg of requestContext.retainedMessages) {
+      runtime.inputStream.enqueue(msg);
+    }
+  }
+
   const options = {
     ...requestContext.options,
     stderr: (data) => {

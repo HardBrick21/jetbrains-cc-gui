@@ -93,6 +93,9 @@ public class SessionState {
     // PSI context collection toggle
     private boolean psiContextEnabled = true;
 
+    // Context dirty flag — set when messages are deleted, cleared after runtime rebuild
+    private volatile boolean contextDirty = false;
+
     // Getters
     public String getSessionId() {
         return sessionId;
@@ -166,6 +169,10 @@ public class SessionState {
 
     public boolean isPsiContextEnabled() {
         return psiContextEnabled;
+    }
+
+    public boolean isContextDirty() {
+        return contextDirty;
     }
 
     // Setters
@@ -258,10 +265,40 @@ public class SessionState {
     }
 
     /**
+     * Mark the context as dirty (needs runtime rebuild).
+     */
+    public void markContextDirty() {
+        this.contextDirty = true;
+    }
+
+    /**
+     * Clear the dirty flag after runtime rebuild.
+     */
+    public void clearContextDirty() {
+        this.contextDirty = false;
+    }
+
+    /**
      * Add a message to the history.
      */
     public void addMessage(ClaudeSession.Message message) {
         messages.add(message);
+    }
+
+    /**
+     * Delete a message at the specified index.
+     *
+     * @param index the message index to delete
+     * @return true if a message was deleted, false if index was invalid
+     */
+    public boolean deleteMessage(int index) {
+        if (index < 0 || index >= messages.size()) {
+            return false;
+        }
+        messages.remove(index);
+        contextDirty = true;
+        updateLastModifiedTime();
+        return true;
     }
 
     /**

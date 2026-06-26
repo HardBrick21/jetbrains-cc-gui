@@ -265,6 +265,7 @@ public class ChatWindowDelegate {
         messageDispatcher.registerHandler(new DependencyHandler(handlerContext));
         messageDispatcher.registerHandler(new ClipboardHandler(handlerContext));
         messageDispatcher.registerHandler(new NodeProcessHandler(handlerContext));
+        messageDispatcher.registerHandler(new DeleteMessageHandler(handlerContext));
 
         messageDispatcher.registerHandler(new WindowEventHandler(handlerContext, new WindowEventHandler.Callback() {
             @Override public void onHeartbeat(String content) { host.getWebviewWatchdog().handleHeartbeat(content); }

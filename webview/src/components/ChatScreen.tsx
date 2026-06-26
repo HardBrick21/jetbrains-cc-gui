@@ -111,6 +111,8 @@ export interface ChatScreenProps {
   // Message queue
   messageQueue: MessageQueueValue;
   onRemoveFromQueue: (id: string) => void;
+  /** Callback when user requests to delete a message */
+  onDeleteMessage?: (messageIndex: number) => void;
 }
 
 /**
@@ -141,6 +143,7 @@ export const ChatScreen = ({
   onStreamingEnabledChange,
   onAutoOpenFileEnabledChange, onLongContextChange,
   messageQueue, onRemoveFromQueue,
+  onDeleteMessage,
 }: ChatScreenProps) => {
   const { t } = useTranslation();
   const { messages, loading, isThinking, streamingActive, loadingStartTime, subagentHistories } = useMessages();
@@ -252,6 +255,7 @@ export const ChatScreen = ({
                     setCurrentView('settings');
                   }}
                   currentProvider={currentProvider}
+                  onDeleteMessage={onDeleteMessage}
                 />
               </ToolResultRawContext.Provider>
             </SubagentHistoryContext.Provider>

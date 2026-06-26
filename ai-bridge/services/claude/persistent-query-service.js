@@ -661,6 +661,37 @@ export async function shutdownPersistentRuntimes() {
   resetCachedQueryFn();
 }
 
+/**
+ * Rebuild runtime with retained messages.
+ * Disposes old runtime and creates new one with filtered message history.
+ */
+export async function rebuildRuntimeWithMessages(params = {}) {
+  const safeParams = params || {};
+  const sessionId = safeParams.sessionId || null;
+  const retainedMessages = safeParams.retainedMessages || [];
+
+  console.log('[LIFECYCLE] rebuildRuntimeWithMessages sessionId=' + (sessionId || '(new)') +
+              ' retainedMessages=' + retainedMessages.length);
+
+  // Dispose existing runtime for this session
+  if (sessionId) {
+    const existingRuntime = getRuntimeForSession(sessionId);
+    if (existingRuntime) {
+      await disposeRuntime(existingRuntime, { removeSession });
+    }
+  }
+
+  // Build request context with retained messages
+  const requestContext = await buildRequestContext(safeParams, false);
+  requestContext.retainedMessages = retainedMessages;
+
+  // Create new runtime
+  const runtime = await acquireRuntime(requestContext, { registerActiveQueryResult, removeSession });
+
+  console.log('[LIFECYCLE] Runtime rebuilt successfully');
+  return runtime;
+}
+
 export const __testing = {
   async resetState() {
     await shutdownPersistentRuntimes();
